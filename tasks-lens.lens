@@ -1,0 +1,11 @@
+[Lens]
+DBusName=unity.singlet.lens.tasks
+DBusPath=/unity/singlet/lens/tasks
+Name=Tasks Search lens
+Icon=/usr/share/unity/lenses/tasks-lens/lens-icon.svg
+Description=Tasks Search
+SearchHint=Search Tasks
+#Shortcut=c
+
+[Desktop Entry]
+X-Ubuntu-Gettext-Domain=tasks
