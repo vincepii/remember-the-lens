@@ -7,25 +7,23 @@ This application doesn't use your personal data (obtained from your
 Remember The Milk account), for purposes other than displaying this data on the
 Unity Lens.
 
-#Install (Ubuntu 11.10)
-cd src/singlet && sudo python setup.py build && cd ../../
-sudo mkdir /usr/share/unity/lenses/tasks-lens
-sudo cp tasks-lens.lens /usr/share/unity/lenses/tasks-lens
-sudo cp icons/lens-icon.svg /usr/share/unity/lenses/tasks-lens
-sudo cp icons/tow*.png /usr/share/unity/lenses/tasks-lens
-setsid unity    # (or logout and login again)
+#Install (Ubuntu 12.04)
+CD to the lens directory and execute:
+    sudo ./install.sh
+Then you have to logout and login again in order to restart Unity
+
 
 #Run
-cd src
-python lens.py
+CD to the lens directory and execute:
+    ./launch.sh
 
 #Notes
 1. The first time the Lens is started, it will ask for your authorization
    to access your RTM account (read-only mode). Check your web browser,
-   authorize it and click the icon :).
+   authorize it and click the button on the lens :).
 2. The first time the Lens is started, the "Sections" area will not
-   contain any filters for categories. Just stop the lens (ctrl-c on the
-   python process) and restart it to have full functionality.
+   contain any filters for categories. Just stop the lens (ctrl-c)
+   and restart it to have full functionality.
 
-Check this page for details: http://thealarmclocksixam.wordpress.com/2012/03/18/tasks-lens-for-ubuntu-unity-11-10-to-browse-tasks-on-remember-the-milk
+Check this page for details: TODO
 
