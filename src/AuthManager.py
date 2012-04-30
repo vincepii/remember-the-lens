@@ -76,9 +76,8 @@ class AuthManager(object):
             self._icon,
             self._taskModelItem,
             'text/plain',
-            '',
-            'Please, check your web browser and authorize the '
-            'Lens. Click this icon when finished.',
+            'Authorization required',
+            'Check your web browser. Click this icon when finished.',
             '')
 
     def rtmCompleteAuthentication(self, rtmApi, tokenManager):

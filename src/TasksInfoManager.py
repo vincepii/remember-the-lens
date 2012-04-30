@@ -25,6 +25,7 @@
 
 
 from time import time
+from datetime import datetime
 
 class TasksInfoManager(object):
     '''
@@ -42,11 +43,20 @@ class TasksInfoManager(object):
             self.name = ""
             # Due time
             self.due = ""
+            # Due time (pretty format)
+            self.prettyDue = ""
             # Priority
             self.priority = ""
 
     # Time interval to consider the tasksList cache old (in seconds)
     TASKS_LIST_UPDATE_INTERVAL = 20
+
+    # String representing the ID for the priority ordering filter
+    ORDERING_PRIORITY_ID = "ord_pri"
+    # String representing the ID for the due date ordering filter
+    ORDERING_DUE_ID = "ord_due"
+    # String representing the ID for the due date ordering filter
+    ORDERING_NAMES_ID = "ord_name"
 
     def __init__(self, listsManager):
         super(TasksInfoManager, self).__init__()
@@ -60,6 +70,19 @@ class TasksInfoManager(object):
         
         # Reference to the lists manager object
         self._listsManager = listsManager
+
+    def orderTasksList(self, tasks, ordering):
+        '''
+        Takes a list of TaskDescriptor objects and order them (inout param)
+        '''
+        if ordering == self.ORDERING_PRIORITY_ID:
+            tasks.sort(lambda x, y: cmp(x.priority, y.priority) or (+1 if x.due == '' else -1 if y.due == '' else cmp(x.due, y.due)))
+        elif ordering == self.ORDERING_DUE_ID:
+            tasks.sort(lambda x, y: (+1 if x.due == '' else -1 if y.due == '' else cmp(x.due, y.due)))
+        elif ordering == self.ORDERING_NAMES_ID:
+            tasks.sort(lambda x, y: cmp(x.name, y.name))
+        else:
+            pass
 
     def getTasksOfCategory(self, categoryName):
         '''
@@ -86,6 +109,7 @@ class TasksInfoManager(object):
                 descriptor.category = self._listsManager.getListName(taskList.id) 
                 descriptor.name = taskseries.name
                 descriptor.due = taskseries.task.due
+                descriptor.prettyDue = self._prettyFormatDueDate(taskseries.task.due)
                 descriptor.priority = taskseries.task.priority
                 tasks.append(descriptor)
         return tasks
@@ -118,4 +142,39 @@ class TasksInfoManager(object):
         Returns the current time in seconds since the epoch
         """
         return int(time())
+
+    def _prettyFormatDueDate(self, dueDateString):
+        '''
+        Parses the due date as provided by the service and
+        produces a pretty representation
+        '''
+        
+        if dueDateString == '':
+            return ''
+
+        # Input format example: 2012-03-29T22:00:00Z
+
+        # Collect the tokens
+        start = 0;
+        firstHyphen = dueDateString.find('-')
+        secondHyphen = dueDateString.rfind('-')
+        bigT = dueDateString.find('T')
+        firstColon = dueDateString.find(':')
+        secondColon = dueDateString.rfind(':')
+        bigZ =  dueDateString.find('Z')
+
+        # Extract the strings
+        year = dueDateString[start : firstHyphen]
+        month = dueDateString[firstHyphen + 1 : secondHyphen]
+        day = dueDateString[secondHyphen + 1 : bigT]
+        hour = dueDateString[bigT + 1 : firstColon]
+        minutes = dueDateString[firstColon + 1 : secondColon]
+        seconds = dueDateString[secondColon + 1 : bigZ]
+
+        # Build the formatted string
+        dt = datetime (int(year), int(month), int(day), int(hour), int(minutes), int(seconds))
+
+        # E.g. 'Wed 07 Nov 2012 11:09AM'
+        return dt.strftime("%a %d %b %Y %I:%M%p")
+
 

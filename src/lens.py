@@ -62,7 +62,7 @@ class TasksLens(SingleScopeLens):
         search_hint = 'Search Tasks'
         icon = 'tasks.svg'
         category_order = ['tasks']
-        filter_order = ['categoryFilter', 'displayedFieldsFilter'] 
+        filter_order = ['categoryFilter', 'displayedFieldsFilter', 'orderFilter'] 
 
     tasks = ListViewCategory("Tasks", 'stock_yes')
 
@@ -98,8 +98,16 @@ class TasksLens(SingleScopeLens):
     displayedFieldsFilter.add_option(DUE_FIELD_FILTER_ID, "Due", None)
     displayedFieldsFilter.add_option(PRIORITY_FIELD_FILTER_ID, "Priority", None)
 
+    # Populate the ordering filter
+    orderFilter = Unity.RadioOptionFilter.new("orderingFilter", "Sort by", None, False)
+    orderFilter.add_option(TasksInfoManager.ORDERING_PRIORITY_ID, "Priority", None)
+    orderFilter.add_option(TasksInfoManager.ORDERING_DUE_ID, "Due dates", None)
+    orderFilter.add_option(TasksInfoManager.ORDERING_NAMES_ID, "Names", None)
+
     # Category visualization must be active by default
     displayedFieldsFilter.get_option(CATEGORY_FIELD_FILTER_ID).props.active = True
+    displayedFieldsFilter.get_option(DUE_FIELD_FILTER_ID).props.active = True
+    displayedFieldsFilter.get_option(PRIORITY_FIELD_FILTER_ID).props.active = True
 
     # Minimum characters to filter results using the search bar
     MIN_SEARCH_LENGTH = 3
@@ -168,15 +176,21 @@ class TasksLens(SingleScopeLens):
         # filteredCategory doesn't name an existing category)
         tasks = self._tasksInfoManager.getTasksOfCategory(filteredCategory)
 
+        # Get the ordering filter status
+        try:
+            filteringId = self._scope.get_filter('orderingFilter').get_active_option().props.id
+        except (AttributeError):
+            filteringId = 'Unspecified'
+        self._tasksInfoManager.orderTasksList(tasks, filteringId)
+
         for taskDescriptor in tasks:
             categoryName = taskDescriptor.category if CATEGORY_FIELD_FILTER_ID in optionalDisplayFields else ""
-            dueTime = taskDescriptor.due if DUE_FIELD_FILTER_ID in optionalDisplayFields else ""
+            dueTime = taskDescriptor.prettyDue if DUE_FIELD_FILTER_ID in optionalDisplayFields else ""
             priority = taskDescriptor.priority if PRIORITY_FIELD_FILTER_ID in optionalDisplayFields else ""
             name = taskDescriptor.name
             self._updateModel(categoryName, name, dueTime, priority, search, model)
 
     def _updateModel(self, categoryName, taskName, due, priority, search, model):
-        # TODO: priority icons
         if len(due) > 0:
             due = ' ' + '[' + due + ']'
 
