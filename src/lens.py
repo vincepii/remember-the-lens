@@ -109,6 +109,9 @@ class TasksLens(SingleScopeLens):
     displayedFieldsFilter.get_option(DUE_FIELD_FILTER_ID).props.active = True
     displayedFieldsFilter.get_option(PRIORITY_FIELD_FILTER_ID).props.active = True
 
+    # Priority order as default
+    orderFilter.get_option(TasksInfoManager.ORDERING_PRIORITY_ID).props.active = True
+
     # Minimum characters to filter results using the search bar
     MIN_SEARCH_LENGTH = 3
     def __init__ (self):
