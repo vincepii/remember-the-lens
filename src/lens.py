@@ -199,7 +199,7 @@ class TasksLens(SingleScopeLens):
 
         icon = ICON + priority + ICON_EXTENSION
 
-        if len(search) < self.MIN_SEARCH_LENGTH or search in taskName:
+        if len(search) < self.MIN_SEARCH_LENGTH or search.lower() in taskName.lower():
             model.append('rtmLens://select/%s' % taskName,
                 icon,
                 self.tasks,
