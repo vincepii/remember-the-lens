@@ -24,8 +24,8 @@
 #    certified by Remember The Milk.
 
 
-from time import time
-from datetime import datetime
+from time import time, timezone, altzone, localtime
+from datetime import datetime, timedelta
 
 class TasksInfoManager(object):
     '''
@@ -70,6 +70,10 @@ class TasksInfoManager(object):
         
         # Reference to the lists manager object
         self._listsManager = listsManager
+        
+        # The user's current system timezone offset
+        tzoffset = timezone if not localtime().tm_isdst else altzone
+        self._tzoffset = timedelta(seconds = tzoffset * -1)
 
     def orderTasksList(self, tasks, ordering):
         '''
@@ -109,7 +113,7 @@ class TasksInfoManager(object):
                 descriptor.category = self._listsManager.getListName(taskList.id) 
                 descriptor.name = taskseries.name
                 descriptor.due = taskseries.task.due
-                descriptor.prettyDue = self._prettyFormatDueDate(taskseries.task.due)
+                descriptor.prettyDue = self._prettyFormatDueDate(taskseries.task.due, taskseries.task.has_due_time)
                 descriptor.priority = taskseries.task.priority
                 tasks.append(descriptor)
         return tasks
@@ -143,7 +147,7 @@ class TasksInfoManager(object):
         """
         return int(time())
 
-    def _prettyFormatDueDate(self, dueDateString):
+    def _prettyFormatDueDate(self, dueDateString, hasDueTime):
         '''
         Parses the due date as provided by the service and
         produces a pretty representation
@@ -173,8 +177,12 @@ class TasksInfoManager(object):
 
         # Build the formatted string
         dt = datetime (int(year), int(month), int(day), int(hour), int(minutes), int(seconds))
+        dt = dt + self._tzoffset
 
         # E.g. 'Wed 07 Nov 2012 11:09AM'
-        return dt.strftime("%a %d %b %Y %I:%M%p")
+        if hasDueTime == '1':
+            return dt.strftime("%a %d %b %Y %I:%M%p")
+        else:
+            return dt.strftime("%a %d %b %Y")
 
 
