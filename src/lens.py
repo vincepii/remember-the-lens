@@ -38,6 +38,24 @@ from ListsInfoManager import ListsInfoManager
 from AuthManager import AuthManager
 from TasksInfoManager import TasksInfoManager
 
+import locale
+import gettext
+
+def init_localization():
+    locale.setlocale(locale.LC_ALL, '')
+    # take first two characters of country code
+    loc = locale.getlocale()
+    filename = "../locale/%s.mo" % locale.getlocale()[0][0:2]
+    try:
+        print "Opening message file {} for locale {}".format(filename, loc[0])
+        trans = gettext.GNUTranslations(open(filename, "rb"))
+    except IOError:
+        print "Using default messages (English)"
+        trans = gettext.NullTranslations()
+    trans.install()
+
+init_localization()
+
 # http://groups.google.com/group/rememberthemilk-api/browse_thread/thread/dcb035f162d4dcc8?pli=1
 RAK = "b2d2254113dd2cd9dc773a62c5a9e337"
 RSS = "733e05a324352a7d"
@@ -57,17 +75,17 @@ class TasksLens(SingleScopeLens):
 
     class Meta:
         name = 'tasks'
-        title = 'Search Tasks'
-        description = 'Tasks Search'
-        search_hint = 'Search Tasks'
+        title = _('Search Tasks')
+        description = _('Tasks Search')
+        search_hint = _('Search Tasks')
         icon = 'tasks.svg'
         category_order = ['tasks']
         filter_order = ['categoryFilter', 'displayedFieldsFilter', 'orderFilter'] 
 
-    tasks = ListViewCategory("Tasks", 'stock_yes')
+    tasks = ListViewCategory(_("Tasks"), 'stock_yes')
 
     # id, display name, icon, contracted state
-    categoryFilter = Unity.RadioOptionFilter.new("categoryFilter", "Sections", None, False)
+    categoryFilter = Unity.RadioOptionFilter.new("categoryFilter", _("Sections"), None, False)
 
     # Get the lists names if possible
     catNames = ListsInfoManager.getTheCategoriesListStatically(RAK, RSS)
@@ -87,22 +105,22 @@ class TasksLens(SingleScopeLens):
 
     # Populate the category filters
     if len(categoryIdToNameMappingTable) == 0:
-        categoryFilter.add_option('0', "Lens restart needed", None)
+        categoryFilter.add_option('0', _("Lens restart needed"), None)
     else:
         for i in range(0, len(categoryIdToNameMappingTable)):
             categoryFilter.add_option(categoryIdToNameMappingTable.keys()[i], categoryIdToNameMappingTable.values()[i], None)
 
     # Populate the ID filters
-    displayedFieldsFilter = Unity.CheckOptionFilter.new("fieldsFilter", "Fields to display", None, False) 
-    displayedFieldsFilter.add_option(CATEGORY_FIELD_FILTER_ID, "Category", None)
-    displayedFieldsFilter.add_option(DUE_FIELD_FILTER_ID, "Due", None)
-    displayedFieldsFilter.add_option(PRIORITY_FIELD_FILTER_ID, "Priority", None)
+    displayedFieldsFilter = Unity.CheckOptionFilter.new("fieldsFilter", _("Fields to display"), None, False) 
+    displayedFieldsFilter.add_option(CATEGORY_FIELD_FILTER_ID, _("Category"), None)
+    displayedFieldsFilter.add_option(DUE_FIELD_FILTER_ID, _("Due"), None)
+    displayedFieldsFilter.add_option(PRIORITY_FIELD_FILTER_ID, _("Priority"), None)
 
     # Populate the ordering filter
-    orderFilter = Unity.RadioOptionFilter.new("orderingFilter", "Sort by", None, False)
-    orderFilter.add_option(TasksInfoManager.ORDERING_PRIORITY_ID, "Priority", None)
-    orderFilter.add_option(TasksInfoManager.ORDERING_DUE_ID, "Due dates", None)
-    orderFilter.add_option(TasksInfoManager.ORDERING_NAMES_ID, "Names", None)
+    orderFilter = Unity.RadioOptionFilter.new("orderingFilter", _("Sort by"), None, False)
+    orderFilter.add_option(TasksInfoManager.ORDERING_PRIORITY_ID, _("Priority"), None)
+    orderFilter.add_option(TasksInfoManager.ORDERING_DUE_ID, _("Due dates"), None)
+    orderFilter.add_option(TasksInfoManager.ORDERING_NAMES_ID, _("Names"), None)
 
     # Category visualization must be active by default
     displayedFieldsFilter.get_option(CATEGORY_FIELD_FILTER_ID).props.active = True
