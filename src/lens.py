@@ -243,4 +243,3 @@ class TasksLens(SingleScopeLens):
 
 if __name__ == "__main__":
     run_lens(TasksLens, sys.argv)
-
