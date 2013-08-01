@@ -47,6 +47,12 @@ class TasksInfoManager(object):
             self.prettyDue = ""
             # Priority
             self.priority = ""
+            # List ID
+            self.listId = ""
+            # Taskseries ID
+            self.taskseriesId = ""
+            # Task ID
+            self.taskId = ""
 
     # Time interval to consider the tasksList cache old (in seconds)
     TASKS_LIST_UPDATE_INTERVAL = 20
@@ -115,6 +121,9 @@ class TasksInfoManager(object):
                 descriptor.due = taskseries.task.due
                 descriptor.prettyDue = self._prettyFormatDueDate(taskseries.task.due, taskseries.task.has_due_time)
                 descriptor.priority = taskseries.task.priority
+                descriptor.listId = taskList.id
+                descriptor.taskseriesId = taskseries.id
+                descriptor.taskId = taskseries.task.id
                 tasks.append(descriptor)
         return tasks
 
@@ -152,7 +161,6 @@ class TasksInfoManager(object):
         Parses the due date as provided by the service and
         produces a pretty representation
         '''
-        
         if dueDateString == '':
             return ''
 
@@ -184,5 +192,21 @@ class TasksInfoManager(object):
             return dt.strftime("%a %d %b %Y %I:%M%p")
         else:
             return dt.strftime("%a %d %b %Y")
+
+    def markCompleted(self, rtmApi, listId, taskSeriesId, taskId):
+        '''
+        Mark the task identified by the given IDs as complete.
+        '''
+        # The operation requires a timeline
+        result = rtmApi.rtm.timelines.create()
+        timeline = result.timeline.value
+        # Complete task
+        rtmApi.rtm.tasks.complete(timeline = timeline,
+                                  list_id = listId,
+                                  taskseries_id = taskSeriesId,
+                                  task_id = taskId)
+        # Invalidate the timestamp so the list of tasks will be
+        # downloaded again
+        self._tasksListTimestamp = 0;
 
 

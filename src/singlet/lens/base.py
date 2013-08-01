@@ -158,6 +158,7 @@ class SingleScopeLens(Lens):
         self._scope = Unity.Scope.new ("%s/main" % self._meta.bus_path)
         self._scope.connect ("search-changed", self.on_search_changed)
         self._scope.connect ("filters-changed", self.on_filtering_changed);
+        self._scope.connect('preview-uri', self.on_preview_uri)
 
         if hasattr(self, 'handle_uri'):
             self._scope.connect('activate-uri', self.handle_uri)
