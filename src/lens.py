@@ -28,7 +28,7 @@
 # TODO: package as app
 # TODO: add logout button
 # TODO: remove the timestamp and build a hastable representation of taskslists
-# TODO: aggiungere la callback filters changed
+# TODO: add callback for filters changed
 
 import sys
 import webbrowser
