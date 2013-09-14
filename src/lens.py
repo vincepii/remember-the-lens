@@ -79,17 +79,17 @@ class TasksLens(SingleScopeLens):
 
     class Meta:
         name = 'tasks'
-        title = _('Search Tasks')
-        description = _('Tasks Search')
-        search_hint = _('Search Tasks')
+        title = _(u'Search Tasks').decode('utf-8')
+        description = _(u'Tasks Search').decode('utf-8')
+        search_hint = _(u'Search Tasks').decode('utf-8')
         icon = 'tasks.svg'
         category_order = ['tasks']
         filter_order = ['categoryFilter', 'displayedFieldsFilter', 'orderFilter', 'completedFilter']
 
-    tasks = ListViewCategory(_("Tasks"), 'stock_yes')
+    tasks = ListViewCategory(_(u"Tasks").decode('utf-8'), 'stock_yes')
 
     # id, display name, icon, contracted state
-    categoryFilter = Unity.RadioOptionFilter.new("categoryFilter", _("Sections"), None, False)
+    categoryFilter = Unity.RadioOptionFilter.new("categoryFilter", _(u"Sections").decode('utf-8'), None, False)
 
     # Get the lists names if possible
     catNames = ListsInfoManager.getTheCategoriesListStatically(RAK, RSS)
@@ -103,11 +103,11 @@ class TasksLens(SingleScopeLens):
     #       '4': 'Sent'
     categoryIdToNameMappingTable = {}
 
-    PRIORITIES = {'0': _('Oops, error!'),
-                  '1': _('High Priority'),
-                  '2': _('Medium Priority'),
-                  '3': _('Low Priority'),
-                  'N': _('Unspecified')}
+    PRIORITIES = {'0': _(u'Oops, error!').decode('utf-8'),
+                  '1': _(u'High Priority').decode('utf-8'),
+                  '2': _(u'Medium Priority').decode('utf-8'),
+                  '3': _(u'Low Priority').decode('utf-8'),
+                  'N': _(u'Unspecified').decode('utf-8')}
 
     # Populate the category map
     for i in range(0, len(catNames)):
@@ -115,26 +115,26 @@ class TasksLens(SingleScopeLens):
 
     # Populate the category filters
     if len(categoryIdToNameMappingTable) == 0:
-        categoryFilter.add_option('0', _("Lens restart needed"), None)
+        categoryFilter.add_option('0', _(u"Lens restart needed").decode('utf-8'), None)
     else:
         for i in range(0, len(categoryIdToNameMappingTable)):
             categoryFilter.add_option(categoryIdToNameMappingTable.keys()[i], categoryIdToNameMappingTable.values()[i], None)
 
     # Populate the ID filters
-    displayedFieldsFilter = Unity.CheckOptionFilter.new("fieldsFilter", _("Fields to display"), None, False) 
-    displayedFieldsFilter.add_option(CATEGORY_FIELD_FILTER_ID, _("Category"), None)
-    displayedFieldsFilter.add_option(DUE_FIELD_FILTER_ID, _("Due"), None)
-    displayedFieldsFilter.add_option(PRIORITY_FIELD_FILTER_ID, _("Priority"), None)
+    displayedFieldsFilter = Unity.CheckOptionFilter.new("fieldsFilter", _(u"Fields to display").decode('utf-8'), None, False) 
+    displayedFieldsFilter.add_option(CATEGORY_FIELD_FILTER_ID, _(u"Category").decode('utf-8'), None)
+    displayedFieldsFilter.add_option(DUE_FIELD_FILTER_ID, _(u"Due").decode('utf-8'), None)
+    displayedFieldsFilter.add_option(PRIORITY_FIELD_FILTER_ID, _(u"Priority").decode('utf-8'), None)
 
     # Populate the ordering filter
-    orderFilter = Unity.RadioOptionFilter.new("orderingFilter", _("Sort by"), None, False)
-    orderFilter.add_option(TasksInfoManager.ORDERING_PRIORITY_ID, _("Priority"), None)
-    orderFilter.add_option(TasksInfoManager.ORDERING_DUE_ID, _("Due dates"), None)
-    orderFilter.add_option(TasksInfoManager.ORDERING_NAMES_ID, _("Names"), None)
+    orderFilter = Unity.RadioOptionFilter.new("orderingFilter", _(u"Sort by").decode('utf-8'), None, False)
+    orderFilter.add_option(TasksInfoManager.ORDERING_PRIORITY_ID, _(u"Priority").decode('utf-8'), None)
+    orderFilter.add_option(TasksInfoManager.ORDERING_DUE_ID, _(u"Due dates").decode('utf-8'), None)
+    orderFilter.add_option(TasksInfoManager.ORDERING_NAMES_ID, _(u"Names").decode('utf-8'), None)
 
     # Filter for complete/uncomplete tasks
-    completedFilter = Unity.RadioOptionFilter.new("completedFilter", _("Show/Hide"), None, False)
-    completedFilter.add_option(SHOW_COMPLETED_FILTER_ID, _("Show completed tasks"), None)
+    completedFilter = Unity.RadioOptionFilter.new("completedFilter", _(u"Show/Hide").decode('utf-8'), None, False)
+    completedFilter.add_option(SHOW_COMPLETED_FILTER_ID, _(u"Show completed tasks").decode('utf-8'), None)
 
     # Category visualization must be active by default
     displayedFieldsFilter.get_option(CATEGORY_FIELD_FILTER_ID).props.active = True
@@ -335,10 +335,10 @@ class TasksLens(SingleScopeLens):
         if taskInfo[TasksDB.TCOMPLETED] is u'':
             # task has not been completed
             # description, string, icon
-            view_action = Unity.PreviewAction.new('complete', _('Mark completed'), None)
+            view_action = Unity.PreviewAction.new('complete', _(u'Mark completed').decode('utf-8'), None)
             view_action.connect('activated', self.complete_task)
         else:
-            view_action = Unity.PreviewAction.new('uncomplete', _('Mark uncompleted'), None)
+            view_action = Unity.PreviewAction.new('uncomplete', _(u'Mark uncompleted').decode('utf-8'), None)
             view_action.connect('activated', self.uncomplete_task)
         preview.add_action(view_action)
         return preview
@@ -349,13 +349,13 @@ class TasksLens(SingleScopeLens):
         text to be put in the preview screen for this task
         '''
         due = self._prettyFormatDueDate(due)
-        s = "<b>" + _("Category") + "</b>: " +  category + "\n"
-        s += "<b>" + _("Priority") + "</b>: " + self.PRIORITIES[priority] + "\n"
-        s += "<b>" + _("Due date") + "</b>: " + due + "\n"
+        s = u"<b>" + _(u"Category").decode('utf-8') + u"</b>: " +  category + u"\n"
+        s += u"<b>" + _(u"Priority").decode('utf-8') + u"</b>: " + self.PRIORITIES[priority] + u"\n"
+        s += u"<b>" + _(u"Due date") + u"</b>: " + due + u"\n"
         if completed is not u'':
-            s += "<b>" + _("Completed on") + "</b>: " + self._prettyFormatDueDate(completed)  + "\n"
-        s += "\n"
-        s += "<b>" + _("Description") + "</b>\n"
+            s += u"<b>" + _(u"Completed on").decode('utf-8') + u"</b>: " + self._prettyFormatDueDate(completed)  + u"\n"
+        s += u"\n"
+        s += u"<b>" + _(u"Description").decode('utf-8') + u"</b>\n"
         s += u"<i>{}</i>".format(name)
         return s
 
