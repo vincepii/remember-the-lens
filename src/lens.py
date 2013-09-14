@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-#    Copyright (c) 2011 Vincenzo Pii <vinc.pii@gmail.com>
+#    Copyright (c) 2013 Vincenzo Pii <vinc.pii@gmail.com>
 
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,12 +23,9 @@
 #    This product uses the Remember The Milk API but is not endorsed or
 #    certified by Remember The Milk.
 
-# TODO: add a button to show also incomplete tasks
 # TODO: use logging system and remove prints
 # TODO: package as app
 # TODO: add logout button
-# TODO: remove the timestamp and build a hastable representation of taskslists
-# TODO: add callback for filters changed
 
 from AuthManager import AuthManager
 from ListsInfoManager import ListsInfoManager
@@ -281,20 +278,6 @@ class TasksLens(SingleScopeLens):
             return self.update_dash_response()
         elif action == 'select':
             webbrowser.open(RTM_PAGE)
-
-#     def _parseModelValue(self, model, taskElement):
-#         '''
-#         Takes a model and an iterator to one of the elements and
-#         returns a dictionary with the elements parsed from model.
-#         '''
-#         parsed = {'uri': model.get_value(taskElement, 0),
-#                 'icon': model.get_value(taskElement, 1),
-#                 'tmodel': model.get_value(taskElement, 2),
-#                 'mime': model.get_value(taskElement, 3),
-#                 'catdue': model.get_value(taskElement, 4),
-#                 'taskdesc': model.get_value(taskElement, 5)
-#                 }
-#         return parsed
 
     def _getTaskIdsFromUri(self, uri):
         '''

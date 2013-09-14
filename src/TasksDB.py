@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-#    Copyright (c) 2011 Vincenzo Pii <vinc.pii@gmail.com>
+#    Copyright (c) 2013 Vincenzo Pii <vinc.pii@gmail.com>
 
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by

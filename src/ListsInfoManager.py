@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-#    Copyright (c) 2011 Vincenzo Pii <vinc.pii@gmail.com>
+#    Copyright (c) 2013 Vincenzo Pii <vinc.pii@gmail.com>
 
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -89,16 +89,6 @@ class ListsInfoManager(object):
         except KeyError:
             raise KeyError
         return listId
-
-#     def getTaskByName(self, listId, name, rtmApi):
-#         '''
-#         Given a list id and a task name (the task description), returns
-#         an XML representation of that list filtered with that task name
-# 
-#         http://www.rememberthemilk.com/services/api/methods/rtm.tasks.getList.rtm
-#         '''
-#         uname = name.decode("utf-8")
-#         return rtmApi.rtm.tasks.getList(list_id = listId, filter=u'name:{}'.format(uname))
 
     @staticmethod
     def getTheCategoriesListStatically(apiKey, sharedSecret):

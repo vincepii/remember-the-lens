@@ -7,7 +7,7 @@ This application doesn't use your personal data (obtained from your
 Remember The Milk account), for purposes other than displaying this data on the
 Unity Lens.
 
-#Install (Ubuntu 12.04)
+#Install
 CD to the lens directory and execute:
     sudo ./install.sh
 Then you have to logout and login again in order to restart Unity
