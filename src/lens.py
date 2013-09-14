@@ -30,23 +30,21 @@
 # TODO: remove the timestamp and build a hastable representation of taskslists
 # TODO: add callback for filters changed
 
+from AuthManager import AuthManager
+from ListsInfoManager import ListsInfoManager
+from TasksDB import TasksDB
+from TasksInfoManager import TasksInfoManager
+from TokenManager import TokenManager
+from datetime import datetime, timedelta
+from gi.repository import GLib, Gio, GObject, Unity, Unity
+from rtmapi import Rtm
+from singlet.lens import SingleScopeLens, ListViewCategory
+from singlet.utils import run_lens
+from time import time, timezone, altzone, localtime
+import gettext
+import locale
 import sys
 import webbrowser
-
-from gi.repository import GLib, Gio, GObject, Unity
-
-from singlet.lens import SingleScopeLens, ListViewCategory 
-from singlet.utils import run_lens
-from rtmapi import Rtm
-from gi.repository import Unity
-
-from TokenManager import TokenManager
-from ListsInfoManager import ListsInfoManager
-from AuthManager import AuthManager
-from TasksInfoManager import TasksInfoManager
-
-import locale
-import gettext
 
 def init_localization():
     locale.setlocale(locale.LC_ALL, '')
@@ -77,6 +75,8 @@ CATEGORY_FIELD_FILTER_ID = "category"
 DUE_FIELD_FILTER_ID = "due"
 # String representing the ID for the priority fields filter
 PRIORITY_FIELD_FILTER_ID = "priority"
+# String representing the ID for the show completed filter
+SHOW_COMPLETED_FILTER_ID = "show_completed"
 
 class TasksLens(SingleScopeLens):
 
@@ -87,7 +87,7 @@ class TasksLens(SingleScopeLens):
         search_hint = _('Search Tasks')
         icon = 'tasks.svg'
         category_order = ['tasks']
-        filter_order = ['categoryFilter', 'displayedFieldsFilter', 'orderFilter'] 
+        filter_order = ['categoryFilter', 'displayedFieldsFilter', 'orderFilter', 'completedFilter']
 
     tasks = ListViewCategory(_("Tasks"), 'stock_yes')
 
@@ -135,6 +135,10 @@ class TasksLens(SingleScopeLens):
     orderFilter.add_option(TasksInfoManager.ORDERING_DUE_ID, _("Due dates"), None)
     orderFilter.add_option(TasksInfoManager.ORDERING_NAMES_ID, _("Names"), None)
 
+    # Filter for complete/uncomplete tasks
+    completedFilter = Unity.RadioOptionFilter.new("completedFilter", _("Show/Hide"), None, False)
+    completedFilter.add_option(SHOW_COMPLETED_FILTER_ID, _("Show completed tasks"), None)
+
     # Category visualization must be active by default
     displayedFieldsFilter.get_option(CATEGORY_FIELD_FILTER_ID).props.active = True
     displayedFieldsFilter.get_option(DUE_FIELD_FILTER_ID).props.active = True
@@ -142,6 +146,9 @@ class TasksLens(SingleScopeLens):
 
     # Priority order as default
     orderFilter.get_option(TasksInfoManager.ORDERING_PRIORITY_ID).props.active = True
+
+    # Do not show complete tasks as default
+    completedFilter.get_option(SHOW_COMPLETED_FILTER_ID).props.active = False
 
     # Minimum characters to filter results using the search bar
     MIN_SEARCH_LENGTH = 3
@@ -165,6 +172,13 @@ class TasksLens(SingleScopeLens):
 
         # RTM object
         self._rtm = Rtm(RAK, RSS, "write", self._token)
+        
+        # Database
+        self._db = TasksDB()
+        
+        # The user's current system timezone offset
+        tzoffset = timezone if not localtime().tm_isdst else altzone
+        self._tzoffset = timedelta(seconds = tzoffset * -1)
 
     #
     # Update results model (currently disabled)
@@ -189,42 +203,53 @@ class TasksLens(SingleScopeLens):
             return
 
         # Download the tasks list
-        self._tasksInfoManager.downloadTasksList(self._rtm)
+        self._tasksInfoManager.downloadTasksList(self._rtm, self._db)
         
-        # Get categories filter active option
+        # Get the category to be displayed (if None, display them all)
         try:
             filteredCategoryId = self._scope.get_filter('categoryFilter').get_active_option().props.id
             filteredCategory = self.categoryIdToNameMappingTable[filteredCategoryId]
         except (AttributeError):
-            filteredCategory = 'All'
+            filteredCategory = None
         except (KeyError):
-            filteredCategory = 'All'
+            filteredCategory = None
 
-        # Get fields filter active options
+        # Get the status of the show completed filter
+        try:
+            showCompleted = self._scope.get_filter('completedFilter').get_active_option().props.id
+            showCompleted = True
+        except (AttributeError):
+            showCompleted = False
+
+        # Get the lists of fields to be displayed for each task element
         optionalDisplayFields = []
         for option in self._scope.get_filter('fieldsFilter').options:
             if option.props.active == True:
                 optionalDisplayFields.append(option.props.id)
 
-        # Get the tasks for the specified category (all categories are returned
-        # if filteredCategory doesn't name an existing category)
-        tasks = self._tasksInfoManager.getTasksOfCategory(filteredCategory)
-
-        # Get the ordering filter status
+        # Get the ordering, if any
         try:
-            filteringId = self._scope.get_filter('orderingFilter').get_active_option().props.id
+            orderBy = self._scope.get_filter('orderingFilter').get_active_option().props.id
         except (AttributeError):
-            filteringId = 'Unspecified'
-        self._tasksInfoManager.orderTasksList(tasks, filteringId)
+            orderBy = None
+        
+        # Filters at this point:
+        # filteredCategoryId: id of the category (list id) to be displayed
+        # orderBy: priority, due date or name
+        # optionalDisplayFields:  contains elements of this set: ("category", "due", "priority")
+        
+        # get the tasks of the specified category (if not None), ordered on orderBy
+        # and also completed tasks if required
+        tasks = self._db.getTasks(filteredCategory, orderBy, showCompleted)
 
-        for taskDescriptor in tasks:
-            categoryName = taskDescriptor.category if CATEGORY_FIELD_FILTER_ID in optionalDisplayFields else ""
-            dueTime = taskDescriptor.prettyDue if DUE_FIELD_FILTER_ID in optionalDisplayFields else ""
-            priority = taskDescriptor.priority if PRIORITY_FIELD_FILTER_ID in optionalDisplayFields else ""
-            name = taskDescriptor.name
-            listId = taskDescriptor.listId
-            taskseriesId = taskDescriptor.taskseriesId
-            taskId = taskDescriptor.taskId
+        for taskDictionary in tasks:
+            categoryName = taskDictionary[TasksDB.TCATEGORY] if CATEGORY_FIELD_FILTER_ID in optionalDisplayFields else ""
+            dueTime = self._prettyFormatDueDate(taskDictionary[TasksDB.TDUE]) if DUE_FIELD_FILTER_ID in optionalDisplayFields else ""
+            priority = taskDictionary[TasksDB.TPRIORITY] if PRIORITY_FIELD_FILTER_ID in optionalDisplayFields else ""
+            name = taskDictionary[TasksDB.TNAME]
+            listId = taskDictionary[TasksDB.TLIST_ID]
+            taskseriesId = taskDictionary[TasksDB.TSERIES_ID]
+            taskId = taskDictionary[TasksDB.TID]
             self._updateModel(categoryName, name, dueTime, priority, search, model, listId, taskseriesId, taskId)
 
     def _updateModel(self, categoryName, taskName, due, priority, search, model, listId, taskseriesId, taskId):
@@ -257,19 +282,19 @@ class TasksLens(SingleScopeLens):
         elif action == 'select':
             webbrowser.open(RTM_PAGE)
 
-    def _parseModelValue(self, model, taskElement):
-        '''
-        Takes a model and an iterator to one of the elements and
-        returns a dictionary with the elements parsed from model.
-        '''
-        parsed = {'uri': model.get_value(taskElement, 0),
-                'icon': model.get_value(taskElement, 1),
-                'tmodel': model.get_value(taskElement, 2),
-                'mime': model.get_value(taskElement, 3),
-                'catdue': model.get_value(taskElement, 4),
-                'taskdesc': model.get_value(taskElement, 5)
-                }
-        return parsed
+#     def _parseModelValue(self, model, taskElement):
+#         '''
+#         Takes a model and an iterator to one of the elements and
+#         returns a dictionary with the elements parsed from model.
+#         '''
+#         parsed = {'uri': model.get_value(taskElement, 0),
+#                 'icon': model.get_value(taskElement, 1),
+#                 'tmodel': model.get_value(taskElement, 2),
+#                 'mime': model.get_value(taskElement, 3),
+#                 'catdue': model.get_value(taskElement, 4),
+#                 'taskdesc': model.get_value(taskElement, 5)
+#                 }
+#         return parsed
 
     def _getTaskIdsFromUri(self, uri):
         '''
@@ -295,6 +320,8 @@ class TasksLens(SingleScopeLens):
         Callback method called when the preview for an element is requested
         (i.e., someone right-clicked a task) 
         '''
+        # Download the tasks list
+        self._tasksInfoManager.downloadTasksList(self._rtm, self._db)
         identifiers = self._getTaskIdsFromUri(uri)
         model = scope.props.results_model
         current_task = model.get_first_iter()
@@ -305,85 +332,99 @@ class TasksLens(SingleScopeLens):
                 break
             else:
                 current_task = model.next(current_task)
-        selectedTaskInfo = self._parseModelValue(model, current_task)
+        if current_task == last_task:
+            # not found!! something very wrong happened
+            raise ValueError('Unable to load task preview')
+        taskInfo = self._db.getTaskById(identifiers['tid'], identifiers['lid'], identifiers['tsid'])
         # Title, description (not visible ?!), icon (set later)
-        preview = Unity.GenericPreview.new(selectedTaskInfo['catdue'], selectedTaskInfo['taskdesc'], None)
-        preview.props.image_source_uri = selectedTaskInfo['icon']
-        icon = Gio.ThemedIcon.new(selectedTaskInfo['icon'])
+        preview = Unity.GenericPreview.new(taskInfo[TasksDB.TCATEGORY], taskInfo[TasksDB.TNAME], None)
+        icon = ICON + taskInfo[TasksDB.TPRIORITY] + ICON_EXTENSION
+        preview.props.image_source_uri = icon
+        icon = Gio.ThemedIcon.new(icon)
         preview.props.image = icon
         # Text
-        preview.props.description_markup = self._getTaskPreviewDescription(selectedTaskInfo)
-        # description, string, icon
-        view_action = Unity.PreviewAction.new('complete', _('Complete (disabled)'), None)
-        view_action.connect('activated', self.complete_task)
+        preview.props.description_markup = self._getPreviewText(taskInfo[TasksDB.TCATEGORY], 
+                                                                taskInfo[TasksDB.TDUE],
+                                                                taskInfo[TasksDB.TPRIORITY],
+                                                                taskInfo[TasksDB.TNAME],
+                                                                taskInfo[TasksDB.TCOMPLETED])
+        # add complete/uncomplete button
+        if taskInfo[TasksDB.TCOMPLETED] is u'':
+            # task has not been completed
+            # description, string, icon
+            view_action = Unity.PreviewAction.new('complete', _('Mark completed'), None)
+            view_action.connect('activated', self.complete_task)
+        else:
+            view_action = Unity.PreviewAction.new('uncomplete', _('Mark uncompleted'), None)
+            view_action.connect('activated', self.uncomplete_task)
         preview.add_action(view_action)
-
-        # TODO: if task is complete, uncomplete button, ow, complete
         return preview
 
-    def _getTaskPreviewDescription(self, taskInfoDictionary):
+    def _getPreviewText(self, category, due, priority, name, completed):
         '''
-        Reads the dictionary of a task information as built from the model
-        ({@see #_parseModelValue) and builds a string to be displayed in
-        the preview screen for this task.
+        Given task information returns the (formatted)
+        text to be put in the preview screen for this task
         '''
-        priority = str(0)
-        taskXml = self._listsInfoManager.getTaskByName(
-                    self._getTaskIdsFromUri(taskInfoDictionary['uri'])['lid'], 
-                    taskInfoDictionary['taskdesc'],
-                    self._rtm)
-        
-        for tasklist in taskXml.tasks:
-            for taskseries in tasklist:
-                priority = str(taskseries.task.priority)
-        catdue = taskInfoDictionary['catdue']
-        category = self._getCategoryFromCatDue(catdue)
-        s = "<b>" + _("Category") + "</b>: " +  catdue + "\n"
+        due = self._prettyFormatDueDate(due)
+        s = "<b>" + _("Category") + "</b>: " +  category + "\n"
         s += "<b>" + _("Priority") + "</b>: " + self.PRIORITIES[priority] + "\n"
-        duedate = self._getDueDateFromCatDue(catdue)
-        s += "<b>" + _("Due date") + "</b>: " + duedate + "\n\n"
+        s += "<b>" + _("Due date") + "</b>: " + due + "\n"
+        if completed is not u'':
+            s += "<b>" + _("Completed on") + "</b>: " + self._prettyFormatDueDate(completed)  + "\n"
+        s += "\n"
         s += "<b>" + _("Description") + "</b>\n"
-        s += "<i>{}</i>".format(taskInfoDictionary['taskdesc'])
+        s += u"<i>{}</i>".format(name)
         return s
 
-    def _getCategoryFromCatDue(self, catdue):
-        '''
-        Takes a "catdue" string (i.e., combination of category and due date,
-        e.g., "Work [Mar 25 2013]" and returns the category only
-        '''
-        category = ""
-        startCat = catdue.find('[')
-        if startCat == -1:
-            category = catdue
-        else:
-           category = catdue[:startCat]
-        return category
-
-    def _getDueDateFromCatDue(self, catdue):
-        '''
-        Takes a "catdue" string (i.e., combination of category and due date,
-        e.g., "Work [Mar 25 2013]" and returns the due date only
-        '''
-        duedate = ""
-        startDueDate = catdue.find('[')
-        if startDueDate == -1:
-            duedate = _("No due date")
-        else:
-            duedate = catdue[startDueDate + 1 : catdue.find(']')]
-        return duedate
-
     def complete_task(self, scope, uri):
-        print "We have to complete this task: ", uri
+        print "Completing task...: ", uri
         ids = self._getTaskIdsFromUri(uri)
-        # TODO: uncomment
-        #self._tasksInfoManager.markCompleted(self._rtm, ids['lid'], ids['tsid'], ids['tid'])
-        # TODO force downloading new tasks
-        # TODO: find a way to show the previous page!
+        self._tasksInfoManager.markCompleted(self._rtm, ids['lid'], ids['tsid'], ids['tid'])
+        self._tasksInfoManager.refreshTasks()
         # http://developer.ubuntu.com/api/ubuntu-12.04/python/Unity-5.0.html#Unity.HandledType
-        return Unity.ActivationResponse(handled = Unity.HandledType.GOTO_DASH_URI, goto_uri='unity.singlet.lens.tasks')
+        return Unity.ActivationResponse(handled = Unity.HandledType.SHOW_PREVIEW)#, goto_uri=uri)
 
     def uncomplete_task(self, scope, uri):
-        print "uncomplete"
+        print "Uncompleting task...: ", uri
+        ids = self._getTaskIdsFromUri(uri)
+        self._tasksInfoManager.markUncompleted(self._rtm, ids['lid'], ids['tsid'], ids['tid'])
+        self._tasksInfoManager.refreshTasks()
+        # http://developer.ubuntu.com/api/ubuntu-12.04/python/Unity-5.0.html#Unity.HandledType
+        return Unity.ActivationResponse(handled = Unity.HandledType.SHOW_PREVIEW)
+        
+    def _prettyFormatDueDate(self, dueDateString):
+        '''
+        Parses the due date as provided by the service and
+        produces a pretty representation
+        '''
+        if dueDateString == '':
+            return ''
+
+        # Input format example: 2012-03-29T22:00:00Z
+
+        # Collect the tokens
+        start = 0;
+        firstHyphen = dueDateString.find('-')
+        secondHyphen = dueDateString.rfind('-')
+        bigT = dueDateString.find('T')
+        firstColon = dueDateString.find(':')
+        secondColon = dueDateString.rfind(':')
+        bigZ =  dueDateString.find('Z')
+
+        # Extract the strings
+        year = dueDateString[start : firstHyphen]
+        month = dueDateString[firstHyphen + 1 : secondHyphen]
+        day = dueDateString[secondHyphen + 1 : bigT]
+        hour = dueDateString[bigT + 1 : firstColon]
+        minutes = dueDateString[firstColon + 1 : secondColon]
+        seconds = dueDateString[secondColon + 1 : bigZ]
+
+        # Build the formatted string
+        dt = datetime (int(year), int(month), int(day), int(hour), int(minutes), int(seconds))
+        dt = dt + self._tzoffset
+
+        # E.g. 'Wed 07 Nov 2012 11:09AM'
+        return dt.strftime("%a %d %b %Y %I:%M%p")
 
 if __name__ == "__main__":
     run_lens(TasksLens, sys.argv)

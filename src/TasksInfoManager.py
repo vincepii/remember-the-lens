@@ -26,43 +26,44 @@
 
 from time import time, timezone, altzone, localtime
 from datetime import datetime, timedelta
+from TasksDB import TasksDB
 
 class TasksInfoManager(object):
     '''
     This class describes the Remember The Milk tasks
     '''
 
-    class TaskDescriptor:
-        '''
-        Class to describe a single task
-        '''
-        def __init__(self):
-            # Task category, e.g. "Personal"
-            self.category = ""
-            # Task name: its description, e.g. "Remember The Milk"
-            self.name = ""
-            # Due time
-            self.due = ""
-            # Due time (pretty format)
-            self.prettyDue = ""
-            # Priority
-            self.priority = ""
-            # List ID
-            self.listId = ""
-            # Taskseries ID
-            self.taskseriesId = ""
-            # Task ID
-            self.taskId = ""
+#     class TaskDescriptor:
+#         '''
+#         Class to describe a single task
+#         '''
+#         def __init__(self):
+#             # Task category, e.g. "Personal"
+#             self.category = ""
+#             # Task name: its description, e.g. "Remember The Milk"
+#             self.name = ""
+#             # Due time
+#             self.due = ""
+#             # Due time (pretty format)
+#             self.prettyDue = ""
+#             # Priority
+#             self.priority = ""
+#             # List ID
+#             self.listId = ""
+#             # Taskseries ID
+#             self.taskseriesId = ""
+#             # Task ID
+#             self.taskId = ""
 
     # Time interval to consider the tasksList cache old (in seconds)
     TASKS_LIST_UPDATE_INTERVAL = 20
 
     # String representing the ID for the priority ordering filter
-    ORDERING_PRIORITY_ID = "ord_pri"
+    ORDERING_PRIORITY_ID = TasksDB.TPRIORITY
     # String representing the ID for the due date ordering filter
-    ORDERING_DUE_ID = "ord_due"
+    ORDERING_DUE_ID = TasksDB.TDUE
     # String representing the ID for the due date ordering filter
-    ORDERING_NAMES_ID = "ord_name"
+    ORDERING_NAMES_ID = TasksDB.TNAME
 
     def __init__(self, listsManager):
         super(TasksInfoManager, self).__init__()
@@ -81,62 +82,72 @@ class TasksInfoManager(object):
         tzoffset = timezone if not localtime().tm_isdst else altzone
         self._tzoffset = timedelta(seconds = tzoffset * -1)
 
-    def orderTasksList(self, tasks, ordering):
-        '''
-        Takes a list of TaskDescriptor objects and order them (inout param)
-        '''
-        if ordering == self.ORDERING_PRIORITY_ID:
-            tasks.sort(lambda x, y: cmp(x.priority, y.priority) or (+1 if x.due == '' else -1 if y.due == '' else cmp(x.due, y.due)))
-        elif ordering == self.ORDERING_DUE_ID:
-            tasks.sort(lambda x, y: (+1 if x.due == '' else -1 if y.due == '' else cmp(x.due, y.due)))
-        elif ordering == self.ORDERING_NAMES_ID:
-            tasks.sort(lambda x, y: cmp(x.name, y.name))
-        else:
-            pass
+#     def orderTasksList(self, tasks, ordering):
+#         '''
+#         Takes a list of TaskDescriptor objects and order them (inout param)
+#         '''
+#         if ordering == self.ORDERING_PRIORITY_ID:
+#             tasks.sort(lambda x, y: cmp(x.priority, y.priority) or (+1 if x.due == '' else -1 if y.due == '' else cmp(x.due, y.due)))
+#         elif ordering == self.ORDERING_DUE_ID:
+#             tasks.sort(lambda x, y: (+1 if x.due == '' else -1 if y.due == '' else cmp(x.due, y.due)))
+#         elif ordering == self.ORDERING_NAMES_ID:
+#             tasks.sort(lambda x, y: cmp(x.name, y.name))
+#         else:
+#             pass
 
-    def getTasksOfCategory(self, categoryName):
-        '''
-        Given a category name, returns a list of tasks
-        belonging to that category.
-        Return type: list of <taskDescriptor>
-        '''
-        tasks = []
+#     def getTasksOfCategory(self, categoryName):
+#         '''
+#         Given a category name, returns a list of tasks
+#         belonging to that category.
+#         Return type: list of <taskDescriptor>
+#         '''
+#         tasks = []
+# 
+#         # Get the corresponding id
+#         try:
+#             categoryId = self._listsManager.getListId(categoryName)
+#         except KeyError:
+#             categoryId = 0
+# 
+#         # Return tasks of every category
+#         for taskList in self._tasksList.tasks:
+#             if categoryId != 0 and taskList.id != categoryId: 
+#                 # Skip this item
+#                 continue
+#             # Get the tasks of this category
+#             for taskseries in taskList:
+#                 descriptor = TasksInfoManager.TaskDescriptor()
+#                 descriptor.category = self._listsManager.getListName(taskList.id) 
+#                 descriptor.name = taskseries.name
+#                 descriptor.due = taskseries.task.due
+#                 descriptor.prettyDue = self._prettyFormatDueDate(taskseries.task.due, taskseries.task.has_due_time)
+#                 descriptor.priority = taskseries.task.priority
+#                 descriptor.listId = taskList.id
+#                 descriptor.taskseriesId = taskseries.id
+#                 descriptor.taskId = taskseries.task.id
+#                 tasks.append(descriptor)
+#         return tasks
 
-        # Get the corresponding id
-        try:
-            categoryId = self._listsManager.getListId(categoryName)
-        except KeyError:
-            categoryId = 0
-
-        # Return tasks of every category
-        for taskList in self._tasksList.tasks:
-            if categoryId != 0 and taskList.id != categoryId: 
-                # Skip this item
-                continue
-            # Get the tasks of this category
-            for taskseries in taskList:
-                descriptor = TasksInfoManager.TaskDescriptor()
-                descriptor.category = self._listsManager.getListName(taskList.id) 
-                descriptor.name = taskseries.name
-                descriptor.due = taskseries.task.due
-                descriptor.prettyDue = self._prettyFormatDueDate(taskseries.task.due, taskseries.task.has_due_time)
-                descriptor.priority = taskseries.task.priority
-                descriptor.listId = taskList.id
-                descriptor.taskseriesId = taskseries.id
-                descriptor.taskId = taskseries.task.id
-                tasks.append(descriptor)
-        return tasks
-
-    def downloadTasksList(self, rtmApi):
+#     def getTaskLists(self, rtmApi):
+#         self.downloadTasksList(rtmApi)
+#         return self._tasksList
+        
+    def downloadTasksList(self, rtmApi, db):
         '''
         Downloads the tasks from RTM if the cached list is empty or too old
         '''
         if self._tasksList == None or self._tasksListExpired() == True:
             # get all open tasks, see http://www.rememberthemilk.com/services/api/methods/rtm.tasks.getList.rtm
-            self._tasksList = rtmApi.rtm.tasks.getList(filter="status:incomplete")
-
-            # Builds the lists information
-            self._listsManager.buildTheListsDictionary(rtmApi)
+            #self._tasksList = rtmApi.rtm.tasks.getList(filter="status:incomplete")
+            self._tasksList = rtmApi.rtm.tasks.getList()
+            
+            # Store tasks in database
+            db.storeTasks(self._tasksList)
+            
+            # Get the lists, see http://www.rememberthemilk.com/services/api/methods/rtm.lists.getList.rtm
+            lists = rtmApi.rtm.lists.getList()
+            
+            db.storeLists(lists)
             
             # update the local cache timestamp
             self._tasksListTimestamp = self._now()
@@ -156,46 +167,46 @@ class TasksInfoManager(object):
         """
         return int(time())
 
-    def _prettyFormatDueDate(self, dueDateString, hasDueTime):
-        '''
-        Parses the due date as provided by the service and
-        produces a pretty representation
-        '''
-        if dueDateString == '':
-            return ''
-
-        # Input format example: 2012-03-29T22:00:00Z
-
-        # Collect the tokens
-        start = 0;
-        firstHyphen = dueDateString.find('-')
-        secondHyphen = dueDateString.rfind('-')
-        bigT = dueDateString.find('T')
-        firstColon = dueDateString.find(':')
-        secondColon = dueDateString.rfind(':')
-        bigZ =  dueDateString.find('Z')
-
-        # Extract the strings
-        year = dueDateString[start : firstHyphen]
-        month = dueDateString[firstHyphen + 1 : secondHyphen]
-        day = dueDateString[secondHyphen + 1 : bigT]
-        hour = dueDateString[bigT + 1 : firstColon]
-        minutes = dueDateString[firstColon + 1 : secondColon]
-        seconds = dueDateString[secondColon + 1 : bigZ]
-
-        # Build the formatted string
-        dt = datetime (int(year), int(month), int(day), int(hour), int(minutes), int(seconds))
-        dt = dt + self._tzoffset
-
-        # E.g. 'Wed 07 Nov 2012 11:09AM'
-        if hasDueTime == '1':
-            return dt.strftime("%a %d %b %Y %I:%M%p")
-        else:
-            return dt.strftime("%a %d %b %Y")
+#     def _prettyFormatDueDate(self, dueDateString, hasDueTime):
+#         '''
+#         Parses the due date as provided by the service and
+#         produces a pretty representation
+#         '''
+#         if dueDateString == '':
+#             return ''
+# 
+#         # Input format example: 2012-03-29T22:00:00Z
+# 
+#         # Collect the tokens
+#         start = 0;
+#         firstHyphen = dueDateString.find('-')
+#         secondHyphen = dueDateString.rfind('-')
+#         bigT = dueDateString.find('T')
+#         firstColon = dueDateString.find(':')
+#         secondColon = dueDateString.rfind(':')
+#         bigZ =  dueDateString.find('Z')
+# 
+#         # Extract the strings
+#         year = dueDateString[start : firstHyphen]
+#         month = dueDateString[firstHyphen + 1 : secondHyphen]
+#         day = dueDateString[secondHyphen + 1 : bigT]
+#         hour = dueDateString[bigT + 1 : firstColon]
+#         minutes = dueDateString[firstColon + 1 : secondColon]
+#         seconds = dueDateString[secondColon + 1 : bigZ]
+# 
+#         # Build the formatted string
+#         dt = datetime (int(year), int(month), int(day), int(hour), int(minutes), int(seconds))
+#         dt = dt + self._tzoffset
+# 
+#         # E.g. 'Wed 07 Nov 2012 11:09AM'
+#         if hasDueTime == '1':
+#             return dt.strftime("%a %d %b %Y %I:%M%p")
+#         else:
+#             return dt.strftime("%a %d %b %Y")
 
     def markCompleted(self, rtmApi, listId, taskSeriesId, taskId):
         '''
-        Mark the task identified by the given IDs as complete.
+        Mark the task identified by the given IDs as completed.
         '''
         # The operation requires a timeline
         result = rtmApi.rtm.timelines.create()
@@ -205,8 +216,26 @@ class TasksInfoManager(object):
                                   list_id = listId,
                                   taskseries_id = taskSeriesId,
                                   task_id = taskId)
+
+    def markUncompleted(self, rtmApi, listId, taskSeriesId, taskId):
+        '''
+        Mark the task identified by the given IDs as not completed.
+        '''
+        # The operation requires a timeline
+        result = rtmApi.rtm.timelines.create()
+        timeline = result.timeline.value
+        # Uncomplete task
+        rtmApi.rtm.tasks.uncomplete(timeline = timeline,
+                                  list_id = listId,
+                                  taskseries_id = taskSeriesId,
+                                  task_id = taskId)
+
+    def refreshTasks(self):
+        '''
+        Task list will be downloaded again on next update, despite the
+        timestamp
+        '''
         # Invalidate the timestamp so the list of tasks will be
         # downloaded again
         self._tasksListTimestamp = 0;
-
 
