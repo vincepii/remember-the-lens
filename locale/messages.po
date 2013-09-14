@@ -3,7 +3,6 @@
 # This file is distributed under the same license as the remember the lens package.
 # Vincenzo Pii <vinc.pii@gmail.com>, 2013.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
