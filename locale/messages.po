@@ -1,0 +1,122 @@
+# Internationalization file for remember the lens.
+# Copyright (C) 2013 Vincenzo Pii <vinc.pii@gmail.com>
+# This file is distributed under the same license as the remember the lens package.
+# Vincenzo Pii <vinc.pii@gmail.com>, 2013.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-09-14 12:49+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../src/lens.py:82 ../src/lens.py:84
+msgid "Search Tasks"
+msgstr ""
+
+#: ../src/lens.py:83
+msgid "Tasks Search"
+msgstr ""
+
+#: ../src/lens.py:89
+msgid "Tasks"
+msgstr ""
+
+#: ../src/lens.py:92
+msgid "Sections"
+msgstr ""
+
+#: ../src/lens.py:106
+msgid "Oops, error!"
+msgstr ""
+
+#: ../src/lens.py:107
+msgid "High Priority"
+msgstr ""
+
+#: ../src/lens.py:108
+msgid "Medium Priority"
+msgstr ""
+
+#: ../src/lens.py:109
+msgid "Low Priority"
+msgstr ""
+
+#: ../src/lens.py:110
+msgid "Unspecified"
+msgstr ""
+
+#: ../src/lens.py:118
+msgid "Lens restart needed"
+msgstr ""
+
+#: ../src/lens.py:124
+msgid "Fields to display"
+msgstr ""
+
+#: ../src/lens.py:125 ../src/lens.py:352
+msgid "Category"
+msgstr ""
+
+#: ../src/lens.py:126
+msgid "Due"
+msgstr ""
+
+#: ../src/lens.py:127 ../src/lens.py:131 ../src/lens.py:353
+msgid "Priority"
+msgstr ""
+
+#: ../src/lens.py:130
+msgid "Sort by"
+msgstr ""
+
+#: ../src/lens.py:132
+msgid "Due dates"
+msgstr ""
+
+#: ../src/lens.py:133
+msgid "Names"
+msgstr ""
+
+#: ../src/lens.py:136
+msgid "Show/Hide"
+msgstr ""
+
+#: ../src/lens.py:137
+msgid "Show completed tasks"
+msgstr ""
+
+#: ../src/lens.py:338
+msgid "Mark completed"
+msgstr ""
+
+#: ../src/lens.py:341
+msgid "Mark uncompleted"
+msgstr ""
+
+#: ../src/lens.py:354
+msgid "Due date"
+msgstr ""
+
+#: ../src/lens.py:356
+msgid "Completed on"
+msgstr ""
+
+#: ../src/lens.py:358
+msgid "Description"
+msgstr ""
+
+#: ../src/AuthManager.py:79
+msgid "Authorization required"
+msgstr ""
+
+#: ../src/AuthManager.py:80
+msgid "Check your web browser. Click this icon when finished."
+msgstr ""
