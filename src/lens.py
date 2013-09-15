@@ -242,7 +242,7 @@ class TasksLens(SingleScopeLens):
         for taskDictionary in tasks:
             categoryName = taskDictionary[TasksDB.TCATEGORY] if CATEGORY_FIELD_FILTER_ID in optionalDisplayFields else ""
             dueTime = self._prettyFormatDueDate(taskDictionary[TasksDB.TDUE]) if DUE_FIELD_FILTER_ID in optionalDisplayFields else ""
-            priority = taskDictionary[TasksDB.TPRIORITY] if PRIORITY_FIELD_FILTER_ID in optionalDisplayFields else ""
+            priority = taskDictionary[TasksDB.TPRIORITY] if PRIORITY_FIELD_FILTER_ID in optionalDisplayFields else "N"
             name = taskDictionary[TasksDB.TNAME]
             listId = taskDictionary[TasksDB.TLIST_ID]
             taskseriesId = taskDictionary[TasksDB.TSERIES_ID]
