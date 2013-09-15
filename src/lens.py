@@ -63,7 +63,7 @@ RAK = "b2d2254113dd2cd9dc773a62c5a9e337"
 RSS = "733e05a324352a7d"
 
 RTM_PAGE="http://www.rememberthemilk.com"
-ICON="/usr/share/unity/lenses/tasks-lens/tow"
+ICON="/usr/share/unity/lenses/tasks-lens/rtl"
 ICON_EXTENSION = ".png"
 
 # String representing the ID for the category fields filter
@@ -162,7 +162,7 @@ class TasksLens(SingleScopeLens):
         self._tokenManager = TokenManager()
 
         # RTM auth manager object
-        self._authManager = AuthManager(ICON + ICON_EXTENSION, self.tasks)
+        self._authManager = AuthManager(ICON + 'cpN' + ICON_EXTENSION, self.tasks)
 
         # RTM auth token
         self._token = self._tokenManager.readTokenFromFile()
@@ -247,13 +247,14 @@ class TasksLens(SingleScopeLens):
             listId = taskDictionary[TasksDB.TLIST_ID]
             taskseriesId = taskDictionary[TasksDB.TSERIES_ID]
             taskId = taskDictionary[TasksDB.TID]
-            self._updateModel(categoryName, name, dueTime, priority, search, model, listId, taskseriesId, taskId)
+            completed = taskDictionary[TasksDB.TCOMPLETED]
+            self._updateModel(categoryName, name, dueTime, priority, search, model, listId, taskseriesId, taskId, completed)
 
-    def _updateModel(self, categoryName, taskName, due, priority, search, model, listId, taskseriesId, taskId):
+    def _updateModel(self, categoryName, taskName, due, priority, search, model, listId, taskseriesId, taskId, completed):
         if len(due) > 0:
             due = ' ' + '[' + due + ']'
-
-        icon = ICON + priority + ICON_EXTENSION
+        
+        icon = self._getIconForTask(priority, completed)
 
         if len(search) < self.MIN_SEARCH_LENGTH or search.lower() in taskName.lower():
             model.append('rtmLens://select/lid={}&tsid={}&tid={}'.format(listId, taskseriesId, taskId),
@@ -263,6 +264,21 @@ class TasksLens(SingleScopeLens):
                 categoryName + due,
                 taskName,
                 '')
+
+    def _getIconForTask(self, priority, completed):
+        '''
+        Returns the file name of the icon to be used for the task with a
+        given priority and complete status
+        '''
+        if completed == u'':
+            # not completed
+            completed = 'u'
+        else:
+            # completed
+            completed = 'c'
+            
+        icon = ICON + completed + 'p' + priority + ICON_EXTENSION
+        return icon
 
     def handle_uri(self, scope, uri):
         action = uri.split('/')[-2]
@@ -321,7 +337,7 @@ class TasksLens(SingleScopeLens):
         taskInfo = self._db.getTaskById(identifiers['tid'], identifiers['lid'], identifiers['tsid'])
         # Title, description (not visible ?!), icon (set later)
         preview = Unity.GenericPreview.new(taskInfo[TasksDB.TCATEGORY], taskInfo[TasksDB.TNAME], None)
-        icon = ICON + taskInfo[TasksDB.TPRIORITY] + ICON_EXTENSION
+        icon = self._getIconForTask(taskInfo[TasksDB.TPRIORITY], taskInfo[TasksDB.TCOMPLETED])
         preview.props.image_source_uri = icon
         icon = Gio.ThemedIcon.new(icon)
         preview.props.image = icon

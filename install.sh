@@ -4,5 +4,5 @@
 mkdir -p /usr/share/unity/lenses/tasks-lens
 cp -u tasks-lens.lens /usr/share/unity/lenses/tasks-lens
 cp -u icons/lens-icon.svg /usr/share/unity/lenses/tasks-lens
-cp -u icons/tow*.png /usr/share/unity/lenses/tasks-lens
+cp -u icons/rtl?p?.png /usr/share/unity/lenses/tasks-lens
 

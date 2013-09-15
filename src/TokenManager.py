@@ -28,7 +28,7 @@ import os
 
 class TokenManager(object):
 
-    TOKEN_FILE = os.getenv('HOME') + "/.local/share/tasks-lens/token"
+    TOKEN_FILE = os.getenv('HOME') + "/.config/remember-the-lens/token"
 
     def __init__(self):
         super(TokenManager, self).__init__()
